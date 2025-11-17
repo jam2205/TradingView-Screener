@@ -1,0 +1,28 @@
+# Machine Learning Extension Requirements
+# Install with: pip install -r requirements-ml.txt
+
+# Core ML dependencies
+pandas>=1.3.0
+pyarrow>=6.0.0          # For Parquet support
+numpy>=1.21.0
+scikit-learn>=1.0.0
+
+# Optional: Advanced ML frameworks
+# xgboost>=1.5.0
+# lightgbm>=3.3.0
+# catboost>=1.0.0
+
+# Optional: Deep Learning
+# torch>=1.10.0
+# tensorflow>=2.8.0
+
+# Optional: Real-time data authentication
+# rookiepy>=0.3.0
+
+# Optional: Data visualization
+# matplotlib>=3.5.0
+# seaborn>=0.11.0
+
+# Optional: Additional utilities
+# pyyaml>=6.0          # For YAML config files
+# tqdm>=4.62.0         # Progress bars

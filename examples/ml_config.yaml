@@ -1,0 +1,247 @@
+# Machine Learning Data Collection Configuration
+# This file defines your data collection strategy for ML pipelines
+
+# Output Configuration
+output:
+  directory: "data/market_data"
+  format: "parquet"  # Options: csv, parquet, sqlite
+  add_metadata: true
+  validate_data: true
+
+# TradingView Authentication (optional, for real-time data)
+# Uncomment and add your session cookies for real-time data access
+# auth:
+#   sessionid: "your_session_id_here"
+
+# Data Collection Datasets
+# Define multiple datasets with different screening criteria
+datasets:
+  # Dataset 1: High Volume Large Caps
+  large_cap_momentum:
+    description: "Large cap stocks with high momentum and volume"
+    market: "america"  # Options: america, crypto, forex, etc.
+
+    # Columns to collect
+    columns:
+      - name
+      - close
+      - open
+      - high
+      - low
+      - volume
+      - market_cap_basic
+      - relative_volume_10d_calc
+      - RSI
+      - MACD.macd
+      - MACD.signal
+      - EMA5
+      - EMA20
+      - EMA50
+      - EMA200
+      - VWAP
+      - Perf.W          # 1-week performance
+      - Perf.1M         # 1-month performance
+      - Perf.3M         # 3-month performance
+      - change          # Daily change %
+      - volatility.D    # Daily volatility
+
+    # Filters (AND logic)
+    filters:
+      - column: "market_cap_basic"
+        operation: "greater"
+        value: 10000000000  # > $10B market cap
+
+      - column: "volume"
+        operation: "greater"
+        value: 1000000  # > 1M volume
+
+      - column: "relative_volume_10d_calc"
+        operation: "greater"
+        value: 1.2  # Above average volume
+
+    # Sorting
+    sort_by: "volume"
+    sort_order: "desc"  # descending
+
+    # Limit results
+    limit: 500
+    offset: 0
+
+  # Dataset 2: Small Cap Growth
+  small_cap_growth:
+    description: "Small cap stocks with growth potential"
+    market: "america"
+
+    columns:
+      - name
+      - close
+      - volume
+      - market_cap_basic
+      - relative_volume_10d_calc
+      - RSI
+      - MACD.macd
+      - MACD.signal
+      - price_earnings_ttm
+      - earnings_per_share_basic_ttm
+      - total_revenue
+      - revenue_per_employee
+      - Perf.1M
+      - Perf.3M
+
+    filters:
+      - column: "market_cap_basic"
+        operation: "in_range"
+        value: [100000000, 2000000000]  # $100M - $2B
+
+      - column: "volume"
+        operation: "greater"
+        value: 100000
+
+      - column: "Perf.3M"
+        operation: "greater"
+        value: 10  # 3-month return > 10%
+
+    sort_by: "Perf.3M"
+    sort_order: "desc"
+    limit: 300
+
+  # Dataset 3: Crypto High Momentum
+  crypto_momentum:
+    description: "Cryptocurrency with high momentum"
+    market: "crypto"
+
+    columns:
+      - name
+      - close
+      - volume
+      - market_cap_calc
+      - relative_volume_10d_calc
+      - RSI
+      - MACD.macd
+      - MACD.signal
+      - Perf.W
+      - Perf.1M
+      - change
+      - volatility.D
+
+    filters:
+      - column: "market_cap_calc"
+        operation: "greater"
+        value: 100000000  # > $100M market cap
+
+      - column: "relative_volume_10d_calc"
+        operation: "greater"
+        value: 1.5
+
+    sort_by: "volume"
+    sort_order: "desc"
+    limit: 200
+
+  # Dataset 4: Technical Breakout Candidates
+  technical_breakout:
+    description: "Stocks showing technical breakout patterns"
+    market: "america"
+
+    columns:
+      - name
+      - close
+      - volume
+      - market_cap_basic
+      - RSI
+      - MACD.macd
+      - MACD.signal
+      - EMA5
+      - EMA20
+      - EMA50
+      - BB.upper
+      - BB.lower
+      - relative_volume_10d_calc
+
+    # Complex filters with OR logic (see advanced_filters example)
+    filters:
+      - column: "market_cap_basic"
+        operation: "greater"
+        value: 1000000000
+
+      - column: "volume"
+        operation: "greater"
+        value: 500000
+
+      # MACD bullish crossover
+      - column: "MACD.macd"
+        operation: "egreater"
+        value: "MACD.signal"
+
+      # RSI not overbought
+      - column: "RSI"
+        operation: "less"
+        value: 75
+
+    sort_by: "relative_volume_10d_calc"
+    sort_order: "desc"
+    limit: 250
+
+# Scheduled Collection Settings
+schedule:
+  enabled: true
+  interval_minutes: 60  # Collect data every hour
+  max_collections: 24   # Run for 24 collections (24 hours if interval=60)
+
+  # Error handling
+  on_error: "continue"  # Options: stop, continue, retry
+  max_retries: 3
+
+# Feature Engineering Settings
+feature_engineering:
+  enabled: true
+
+  # Price-based features
+  returns:
+    periods: [1, 5, 10, 20]  # Calculate returns over these periods
+    log_returns: true
+
+  # Momentum features
+  momentum:
+    windows: [5, 10, 20, 50]
+
+  # Volume features
+  volume:
+    windows: [5, 10, 20]
+
+  # Volatility features
+  volatility:
+    windows: [5, 10, 20, 50]
+
+  # Technical flags
+  technical_flags: true
+
+  # Normalization
+  normalization:
+    enabled: true
+    method: "robust"  # Options: standard, minmax, robust
+
+  # Target variable (for supervised learning)
+  target:
+    enabled: true
+    type: "direction"  # Options: return, direction, class
+    periods: 1  # Predict 1 period ahead
+    price_column: "close"
+
+# Data Quality Settings
+data_quality:
+  # Missing value handling
+  missing_values:
+    strategy: "median"  # Options: drop, ffill, bfill, mean, median, zero
+    drop_threshold: 0.5  # Drop columns with >50% missing
+
+  # Outlier removal
+  outliers:
+    enabled: true
+    method: "iqr"  # Options: iqr, zscore
+    threshold: 1.5  # For IQR method
+
+# Additional Options
+options:
+  log_level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
+  save_raw_data: true  # Save data before preprocessing
+  save_processed_data: true  # Save data after preprocessing
