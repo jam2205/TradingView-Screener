@@ -14,3 +14,20 @@ try:
     __ml_available__ = True
 except ImportError:
     __ml_available__ = False
+
+# Multi-Asset Scanner (optional imports)
+try:
+    from tradingview_screener.multi_asset_scanner import (
+        MultiAssetScanner,
+        scan_all_your_markets,
+        scan_gold_silver,
+        scan_major_indices,
+        scan_major_forex,
+        scan_treasuries,
+        MAJOR_SYMBOLS,
+        MARKETS,
+        TIMEFRAMES
+    )
+    __multi_asset_available__ = True
+except ImportError:
+    __multi_asset_available__ = False
